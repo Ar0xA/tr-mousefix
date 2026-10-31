@@ -31,7 +31,7 @@ except the game, this repository and AutoHotkey. Write your results in the table
 Start the game and log in. Close it again. Open `trmousefix.log` in the game folder.
 
 - It must contain `mod: native module loaded`, `trmousefix: game root window 1706x960` (or
-  `1280x960` for a 4:3 window) and `trmousefix 1.2.1: on`.
+  `1280x960` for a 4:3 window) and `trmousefix 1.2.2: on`.
 - If it says `not loaded` or `not hooked`, or if the file is missing: stop here and send me the
   log. Also check whether Windows Security / Smart App Control showed a warning about
   `trmousefix.pyd`.

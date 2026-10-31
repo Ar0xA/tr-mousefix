@@ -62,7 +62,7 @@ After starting the game, there's a file `trmousefix.log` in your game folder wit
 mod: native module loaded from ...\mods\trmousefix
 mod: UI size updates registered
 trmousefix: game root window 1706x960
-trmousefix 1.2.1: on, root 1706x960, min 2 units; mouselook messages: 120 changed, 40 held, 80 passed
+trmousefix 1.2.2: on, root 1706x960, min 2 units; mouselook messages: 120 changed, 40 held, 80 passed
 ```
 
 If the game is installed under `C:\Program Files` (or `Program Files (x86)`), Windows may

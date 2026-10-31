@@ -43,7 +43,7 @@
  */
 #include <windows.h>
 
-#define VERSION "1.2.1"
+#define VERSION "1.2.2"
 #define PYTHON_API_VERSION 1012 /* Python 2.4 */
 #define METH_NOARGS 0x0004
 #define METH_VARARGS 0x0001
@@ -208,7 +208,11 @@ static int half_margin(int p, int pixels, int virt)
  */
 static int axis_out(int *rest, int center, int pixels, int virt, int *passed)
 {
-    int c0 = units_at(center, pixels, virt);
+    /* The game reads a move from the middle of its root window (virt / 2), not from what the centre
+     * pixel reads: equal for an even window size, but for an odd one the centre pixel reads a unit
+     * short of the middle (641 wide: pixel 320 reads 639, the middle is 640), so a 1-pixel step reads
+     * 1 or 3 units, not 2 (measured 2026-10-31: 641 x 481 and 645 x 484 windows turned wrong). */
+    int c0 = virt / 2;
     int r = *rest, lim = (2 * g_min_units - 1) * pixels;
     int want, p, mid, best = center, best_off = 0x7fffffff, best_margin = -1, got;
     *passed = 0;
