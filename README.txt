@@ -80,7 +80,7 @@ KNOWN LIMITS
 
 - Display scaling (Windows 125 % / 150 %) and some Wine/Proton starts: if the
   pointer lands a pixel off the screen centre after a move, the camera could
-  creep slowly up or down. Version 1.2.0 reads back where the pointer landed,
+  creep slowly up or down. Version 1.2 reads back where the pointer landed,
   which covers Windows; Wine may still show it. If the camera creeps while you
   move the mouse only sideways, set Enabled=0 in trmousefix.ini and report it.
 - Not yet tested on Windows itself.

@@ -31,7 +31,7 @@ except the game, this repository and AutoHotkey. Write your results in the table
 Start the game and log in. Close it again. Open `trmousefix.log` in the game folder.
 
 - It must contain `mod: native module loaded`, `trmousefix: game root window 1706x960` (or
-  `1280x960` for a 4:3 window) and `trmousefix 1.2.0: on`.
+  `1280x960` for a 4:3 window) and `trmousefix 1.2.1: on`.
 - If it says `not loaded` or `not hooked`, or if the file is missing: stop here and send me the
   log. Also check whether Windows Security / Smart App Control showed a warning about
   `trmousefix.pyd`.
@@ -98,7 +98,7 @@ Do the round-trip test (F6 + F7) after each of these:
 In the log, every line reads `move at X,Y (centre CX,CY, ...)`. F6 only moves sideways, so each
 `Y` must be equal to `CY`. If Y is 1 or 2 away from CY on most lines, the pointer does not land
 exactly on the centre after the game re-centres it. That is the problem we look for; please write
-it in the table. Version 1.2.0 also writes `re-centre to X,Y landed at X,Y+1` when the pointer lands
+it in the table. Version 1.2 also writes `re-centre to X,Y landed at X,Y+1` when the pointer lands
 off the centre: count those lines too.
 
 Set `Log=0` again afterwards (the log grows fast).

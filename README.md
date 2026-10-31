@@ -62,7 +62,7 @@ After starting the game, there's a file `trmousefix.log` in your game folder wit
 mod: native module loaded from ...\mods\trmousefix
 mod: UI size updates registered
 trmousefix: game root window 1706x960
-trmousefix 1.2.0: on, root 1706x960, min 2 units; mouselook messages: 120 changed, 40 held, 80 passed
+trmousefix 1.2.1: on, root 1706x960, min 2 units; mouselook messages: 120 changed, 40 held, 80 passed
 ```
 
 If the game is installed under `C:\Program Files` (or `Program Files (x86)`), Windows may
@@ -71,9 +71,9 @@ redirect the file: look in `%LOCALAPPDATA%\VirtualStore\Program Files (x86)\<gam
 ### Known limits
 
 - **Display scaling (Windows 125 % / 150 %) and some Wine/Proton starts:** the game puts the pointer
-  back on the screen centre after each move. If the pointer lands a pixel off that centre, the mod
+  back on the window centre after each move. If the pointer lands a pixel off that centre, the mod
   could take that pixel for a mouse move, and the camera would creep slowly up or down. Since
-  version 1.2.0 the mod reads back where the pointer really landed, which should cover the Windows
+  version 1.2 the mod reads back where the pointer really landed, which should cover the Windows
   case.
   Under Wine the read-back may not see the offset. If the camera creeps while you only move the
   mouse sideways, set `Enabled=0` in `trmousefix.ini` (see Settings) and please report it.
@@ -119,7 +119,7 @@ mouse movement before the game sees it:
 - until then, it tells the game "no movement yet" and keeps the rest for the next time.
 
 Nothing gets lost and nothing gets counted twice. At most 2 units (0.18 degrees) wait to be passed
-on (3 units in the simulation's case of several mouse messages in one frame). The Python part reads the game's UI size and tells the native part, also when you
+on. The Python part reads the game's UI size and tells the native part, also when you
 change resolution. When the mouse cursor is visible (menus, inventory, chat), the mod does nothing.
 No game files are changed: the mod only redirects the game's calls to `PeekMessageA`,
 `GetMessageA`, `SetCursorPos` and `ShowCursor` in memory while the game runs.
@@ -144,8 +144,8 @@ How much the camera turned compared to the correct amount, with the mod:
 | 3840x1600 fullscreen | 99 / 100 / 99 / 100 / 99 % | 93 / 98.5 / 98.5 / 98.5 / 97 % |
 
 Without the mod, 1-pixel steps gave 0-57 % at most of these sizes. These numbers come from
-version 1.0 under Proton on Linux; 1.1 and 1.2 changed how small amounts are released (see How it
-was tested).
+version 1.0 under Proton on Linux; 1.1 changed how small amounts are released (1.2 keeps that rule;
+see How it was tested).
 
 ## Settings (optional)
 
@@ -181,14 +181,14 @@ loads.
 
 With the real client under Proton on Linux, in windows from 800 x 600 up to 3840 x 1600 and in
 fullscreen. The mouse was moved with `xdotool`, and the camera turn was read back from the client.
-The math was also checked in a simulation of the game's measured behaviour for 27 window sizes,
-from 640 x 480 up to 7680 x 4320. It hasn't been tested on Windows yet: the Windows test plan is
+The math was also checked in a simulation of the game's measured behaviour (see below). It hasn't been tested on Windows yet: the Windows test plan is
 in [tests/WINDOWS-TESTPLAN.md](tests/WINDOWS-TESTPLAN.md) (with an AutoHotkey script for the test
 moves in `tests/windows/mousetest.ahk`).
 
-Version 1.2.0 counts each release from what the game has already been given since it last put the
-pointer back on the centre, so nothing is lost when several mouse messages arrive in one frame
-(fast flicks, 1000 Hz mice). A simulation of both ways the game could read the mouse (every
-message, or the last message of each frame) at 9 window sizes, 1 to 8 messages a frame and
-steps of 1 to 8 pixels, keeps the total turn within 2.5 units of the real movement; version 1.1
-lost most of the turn in the second case. Run it with `tests/sim/run.sh` (needs gcc and python3).
+Fast movement: the game turns by each mouse message's distance from the screen centre, also when
+several messages arrive before it puts the pointer back (measured: two messages 384 and 400 px from
+the centre turned the camera 784 px). The mod gives each message the centre plus only that
+message's own share, so a fast flick or a 1000 Hz mouse turns the right amount. A simulation of
+the release math (9 window sizes, 1 to 8 messages a frame, steps of 1 to 8 pixels) keeps the total
+turn within 2.5 units of the real movement and never holds back more than 2 units. Run it with
+`tests/sim/run.sh` (needs gcc and python3).

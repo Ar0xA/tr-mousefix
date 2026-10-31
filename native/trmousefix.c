@@ -24,10 +24,11 @@
  *     game reads as a move of MinUnits (2) or more, close to the remainder (see axis_out), and
  *     exactly the units the game reads there come off the remainder;
  *   - below that the message gets the centre (the game turns 0), and the movement stays.
- * A release is counted from the centre plus what this mod already gave since the game last put the
- * pointer back (so a game that reads only the last message of a frame still gets all of it), and
- * where the pointer really lands after a re-centre is read back (GetCursorPos), so a landing 1 px
- * off the centre (Windows display scaling) is not taken for a mouse move.
+ * The game turns by each message's distance from the centre, also when several messages come before
+ * it puts the pointer back (measured 2026-10-31: a burst of two messages at 384 and 400 px from the
+ * centre turned 784 px). So each message gets the centre plus only its own release. Where the
+ * pointer really lands after a re-centre is read back (GetCursorPos), so a landing 1 px off the
+ * centre (Windows display scaling) is not taken for a mouse move.
  * Nothing else is changed: not the pointer while it is shown, not any message before the root
  * window size is known.
  *
@@ -42,7 +43,7 @@
  */
 #include <windows.h>
 
-#define VERSION "1.2.0"
+#define VERSION "1.2.1"
 #define PYTHON_API_VERSION 1012 /* Python 2.4 */
 #define METH_NOARGS 0x0004
 #define METH_VARARGS 0x0001
@@ -160,23 +161,10 @@ static int g_phys_known = 0;
  * a pixel of movement adds the root size (a pixel is root/window units). */
 static int g_rest_x, g_rest_y;
 static int g_last_w = 1, g_last_h = 1; /* the window size of the last mouselook message */
-/* Since the game last put the pointer back on the centre, per axis: the units this mod gave it
- * (the game reads the pointer against the centre) and the pixel it gave last. */
-static int g_given_x, g_given_y, g_out_x, g_out_y;
-
-/* Back on the centre: nothing given since. */
-static void recentred(void)
-{
-    g_given_x = g_given_y = 0;
-    g_out_x = g_center.x;
-    g_out_y = g_center.y;
-}
-
-/* Start again: no remainder, nothing given. */
+/* Start again: no remainder. */
 static void reset_axes(void)
 {
     g_rest_x = g_rest_y = 0;
-    recentred();
 }
 static volatile LONG n_changed, n_held, n_passed;
 
@@ -216,22 +204,20 @@ static int half_margin(int p, int pixels, int virt)
  *     remainder, but never more than 1 unit past it: an overshoot that large could make the next
  *     small move turn back. Equal: the pixel furthest from a half.
  * What stays is then within about half a unit after each move (more pixels than units), and the
- * most held is 2 units, or 3 when the game reads only the last message of a frame (tests/sim).
+ * most held is 2 units (tests/sim).
  */
-static int axis_out(int *rest, int *given, int *out, int center, int pixels, int virt, int *passed)
+static int axis_out(int *rest, int center, int pixels, int virt, int *passed)
 {
-    int c0 = units_at(center, pixels, virt) + *given; /* what the game reads at the last pixel given */
+    int c0 = units_at(center, pixels, virt);
     int r = *rest, lim = (2 * g_min_units - 1) * pixels;
-    int want, p, mid, best = *out, best_off = 0x7fffffff, best_margin = -1, got;
+    int want, p, mid, best = center, best_off = 0x7fffffff, best_margin = -1, got;
     *passed = 0;
     if (2 * r < lim && 2 * r > -lim)
-        return *out;
+        return center;
     want = div_round(r, pixels);
     if (want < g_min_units && want > -g_min_units)
         want = r > 0 ? g_min_units : -g_min_units;
-    if (*given + want == 1 || *given + want == -1)
-        want += want > 0 ? 1 : -1; /* a total of 1 unit from the centre is ignored: aim past it */
-    mid = *out + (want * pixels) / virt;
+    mid = center + (want * pixels) / virt;
     for (p = mid - 4; p <= mid + 4; p++) {
         int units, off, margin;
         if (p < 0 || p >= pixels)
@@ -239,8 +225,6 @@ static int axis_out(int *rest, int *given, int *out, int center, int pixels, int
         units = units_at(p, pixels, virt) - c0;
         if ((want > 0 && units < g_min_units) || (want < 0 && units > -g_min_units))
             continue;
-        if (*given + units == 1 || *given + units == -1)
-            continue;             /* the game would read 1 unit from the centre: it ignores that */
         off = units * pixels - r; /* reading minus remainder, in 1/pixels of a unit */
         if (want < 0)
             off = -off;           /* > 0: past the movement, < 0: short of it */
@@ -256,11 +240,9 @@ static int axis_out(int *rest, int *given, int *out, int center, int pixels, int
         }
     }
     if (best_margin < 0)
-        return *out; /* nothing suitable inside the window: give nothing now */
+        return center; /* nothing suitable inside the window: give nothing now */
     got = units_at(best, pixels, virt) - c0;
     *rest -= got * pixels;
-    *given += got;
-    *out = best;
     *passed = got;
     return best;
 }
@@ -305,8 +287,8 @@ static void fix_move(MSG *msg)
         return;
     }
 
-    out_x = axis_out(&g_rest_x, &g_given_x, &g_out_x, g_center.x, w, vw, &px);
-    out_y = axis_out(&g_rest_y, &g_given_y, &g_out_y, g_center.y, h, vh, &py);
+    out_x = axis_out(&g_rest_x, g_center.x, w, vw, &px);
+    out_y = axis_out(&g_rest_y, g_center.y, h, vh, &py);
 
     if (px == 0 && py == 0)
         InterlockedIncrement(&n_held);
@@ -377,7 +359,6 @@ static BOOL WINAPI my_SetCursorPos(int x, int y)
                 g_center_known = 1;
                 reset_axes();
             }
-            recentred();
             /* Where the pointer really is now: with display scaling it can land a pixel off the
              * centre asked for, and that pixel is no mouse movement. More than a pixel off is a real
              * move that came in between: that stays counted (the centre asked for). */
