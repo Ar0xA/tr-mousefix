@@ -72,6 +72,19 @@ It should contain lines like:
   mod: native module loaded from ...\mods\trmousefix
   trmousefix: game root window 1706x960
 
+If the game is under C:\Program Files, Windows may put the file in
+%LOCALAPPDATA%\VirtualStore\Program Files (x86)\<game folder>\ instead.
+
+KNOWN LIMITS
+------------
+
+- Display scaling (Windows 125 % / 150 %) and some Wine/Proton starts: if the
+  pointer lands a pixel off the screen centre after a move, the camera could
+  creep slowly up or down. Version 1.2.0 reads back where the pointer landed,
+  which covers Windows; Wine may still show it. If the camera creeps while you
+  move the mouse only sideways, set Enabled=0 in trmousefix.ini and report it.
+- Not yet tested on Windows itself.
+
 
 ---------------------------------------------------------------------------
 MORE DETAIL

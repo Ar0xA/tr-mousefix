@@ -39,7 +39,11 @@ had_bom = text.startswith(bom)
 if had_bom:
     text = text[len(bom):]
 nl = '\r\n' if '\r\n' in text else '\n'
-lines = [l for l in text.splitlines() if not re.match(r'\s*%s\s*=' % re.escape(key), l, re.I)]
+# Split on line ends only (splitlines would also split on characters such as \x85 inside a value).
+lines = text.replace('\r\n', '\n').split('\n')
+if lines and lines[-1] == '':
+    lines.pop()
+lines = [l for l in lines if not re.match(r'\s*%s\s*=' % re.escape(key), l, re.I)]
 if action == 'add':
     try:
         i = [l.strip().lower() for l in lines].index('[data]')
@@ -56,6 +60,10 @@ case "${2:-}" in
 "")
     if [ ! -f "$HERE/mod/trmousefix.pyd" ]; then
         echo "mod/trmousefix.pyd is missing: build it first (native/build.sh) or use a release." >&2
+        exit 1
+    fi
+    if [ ! -e "$CFG" ]; then
+        echo "No $CFG (the retail game has one); not installed." >&2
         exit 1
     fi
     mkdir -p "$MODDIR/generated"
